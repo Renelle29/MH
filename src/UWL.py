@@ -24,7 +24,7 @@ class UWL:
         all_vals = []
         for line in lines[m+1:]:
             all_vals += list(map(float, line.split()))
-            
+
         for i in range(n):
             for j in range(m):
                 self.distance_matrix[i,j] = all_vals[1 + i + m * i + j]
@@ -75,6 +75,66 @@ class UWL:
             self.open_warehouses = open_warehouses
             self.assignated_warehouses = assignated_warehouses
             self.best_cost = new_cost
+
+    def hn_heuristic_set_cover(self, sets, costs):
+        
+        selected_sets = []
+    
+        uncovered_mask = np.ones(sets.shape[1], dtype=bool)
+
+        epsilon = 1e-8
+        safe_costs = np.where(costs == 0, epsilon, costs)
+        
+        while np.any(uncovered_mask):
+            
+            gains = np.sum(sets & uncovered_mask, axis=1) / safe_costs
+            
+            if (np.max(gains) <= 0):
+                return None
+
+            best_set_idx = np.argmax(gains)
+            selected_sets.append(int(best_set_idx))
+            
+            uncovered_mask &= ~sets[best_set_idx]
+        
+        return selected_sets
+
+    def heuristic_cover_K(self, max_dist):
+        bool_matrix = self.distance_matrix.T <= max_dist
+        selected_sets = self.hn_heuristic_set_cover(bool_matrix, self.build_costs)
+
+        if selected_sets == None:
+            return None
+
+        selected_sets.sort()
+        selected_sets = np.array(selected_sets, dtype=int)
+
+        local_min_idx = np.argmin(self.distance_matrix[:, selected_sets], axis=1)
+        assignated_warehouses = selected_sets[local_min_idx]
+
+        open_warehouses = np.zeros(self.m)
+        open_warehouses[selected_sets] = 1
+
+        new_cost = self.compute_cost(open_warehouses, assignated_warehouses)
+
+        if new_cost < self.best_cost:
+            print(f"Found a better solution with the Cover heuristic. New cost: {new_cost}")
+            self.open_warehouses = open_warehouses
+            self.assignated_warehouses = assignated_warehouses
+            self.best_cost = new_cost
+        
+        return new_cost
+
+    def heuristic_cover(self):
+        max_min_dist = np.max(np.min(self.distance_matrix, axis=1))
+
+        flat_dist = self.distance_matrix.flatten()
+        sorted_dist = flat_dist[flat_dist > max_min_dist]
+        np.random.shuffle(sorted_dist) 
+        sorted_dist = sorted_dist[:10000]
+
+        for dist in sorted_dist:
+            self.heuristic_cover_K(dist)
 
     def print(self):
         print(f"""---------------------------
