@@ -24,7 +24,7 @@ class UWL:
         all_vals = []
         for line in lines[m+1:]:
             all_vals += list(map(float, line.split()))
-        
+            
         for i in range(n):
             for j in range(m):
                 self.distance_matrix[i,j] = all_vals[1 + i + m * i + j]
@@ -53,10 +53,28 @@ class UWL:
             new_cost = self.compute_cost(open_warehouses,assignated_warehouses)
 
             if new_cost < self.best_cost:
-                print(new_cost)
+                print(f"Found a better solution with One_Warehouse heuristic. New cost: {new_cost}")
                 self.open_warehouses = open_warehouses
                 self.assignated_warehouses = assignated_warehouses
                 self.best_cost = new_cost
+
+    def heuristic_nearest_warehouse(self):
+
+        open_warehouses = np.zeros(self.m)
+        assignated_warehouses = np.zeros(self.n)
+
+        for i in range(self.n):
+            closest_warehouse = np.argmin(self.distance_matrix[i])
+            assignated_warehouses[i] = closest_warehouse
+            open_warehouses[closest_warehouse] = 1
+
+        new_cost = self.compute_cost(open_warehouses,assignated_warehouses)
+        
+        if new_cost < self.best_cost:
+            print(f"Found a better solution with Nearest_Warehouse heuristic. New cost: {new_cost}")
+            self.open_warehouses = open_warehouses
+            self.assignated_warehouses = assignated_warehouses
+            self.best_cost = new_cost
 
     def print(self):
         print(f"""---------------------------
