@@ -44,10 +44,10 @@ class UWL:
         return open_warehouses, assignated_warehouses, best_cost
 
     def compute_best_cost(self):
-        return np.sum(self.build_costs * self.open_warehouses) + np.sum(self.distance_matrix[np.arange(self.n), self.assignated_warehouses])
+        return np.sum(self.build_costs * self.open_warehouses) + np.sum(self.distance_matrix[np.arange(self.n), self.assignated_warehouses.astype(int)])
 
     def compute_cost(self, open_warehouses, assignated_warehouses):
-        return np.sum(self.build_costs * open_warehouses) + np.sum(self.distance_matrix[np.arange(self.n), assignated_warehouses])
+        return np.sum(self.build_costs * open_warehouses) + np.sum(self.distance_matrix[np.arange(self.n), assignated_warehouses.astype(int)])
 
     def heuristic_one_warehouse(self):
         
