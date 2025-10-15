@@ -14,6 +14,7 @@ Pour exécuter le programme:
 - [x] - Implémentation de l'heuristique de couverture minimale.
 - [x] - Proposition de structures de voisinages.
 - [x] - Implémentation d'une méthode de descente basée sur la solution d'une heuristique + voisinage.
+- [ ] - Amélioration: descente à démarrages multiples (issus des différentes heuristiques).
 - [ ] - Implémentation d'une métaheuristique.
 - [ ] - Pour aller plus loin.
 - [ ] - Rapport de soutenance.

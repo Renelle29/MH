@@ -157,19 +157,22 @@ class UWL:
             neighborhood = self.k_hamming_neighborhood(self.open_warehouses,k)
 
             for open_warehouses in neighborhood:
-
-                open_idx = np.where(open_warehouses == 1)[0]
-                local_min_idx = np.argmin(self.distance_matrix[:, open_idx], axis=1)
-                assignated_warehouses = open_idx[local_min_idx]
                 
-                new_cost = self.compute_cost(open_warehouses,assignated_warehouses)
+                try:
+                    open_idx = np.where(open_warehouses == 1)[0]
+                    local_min_idx = np.argmin(self.distance_matrix[:, open_idx], axis=1)
+                    assignated_warehouses = open_idx[local_min_idx]
+                    
+                    new_cost = self.compute_cost(open_warehouses,assignated_warehouses)
 
-                if new_cost < self.best_cost:
-                    print(f"Found a better solution during the Descent - {k}-Hamming neighborhood. New cost: {new_cost}")
-                    self.open_warehouses = open_warehouses
-                    self.assignated_warehouses = assignated_warehouses
-                    self.best_cost = new_cost
-                    improved = True
+                    if new_cost < self.best_cost:
+                        print(f"Found a better solution during the Descent - {k}-Hamming neighborhood. New cost: {new_cost}")
+                        self.open_warehouses = open_warehouses
+                        self.assignated_warehouses = assignated_warehouses
+                        self.best_cost = new_cost
+                        improved = True
+                except:
+                    pass
             
             if not improved:
                 k += 1
