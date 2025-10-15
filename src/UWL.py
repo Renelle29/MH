@@ -35,6 +35,14 @@ class UWL:
         self.assignated_warehouses = np.zeros(n)
         self.best_cost = self.compute_best_cost()
 
+    def initialize_bad_solution(self):
+        open_warehouses = np.zeros(self.m)
+        open_warehouses[0] = 1
+        assignated_warehouses = np.zeros(self.n)
+        best_cost = self.compute_cost(open_warehouses,assignated_warehouses)
+
+        return open_warehouses, assignated_warehouses, best_cost
+
     def compute_best_cost(self):
         return np.sum(self.build_costs * self.open_warehouses) + np.sum(self.distance_matrix[np.arange(self.n), self.assignated_warehouses.astype(int)])
 
@@ -43,6 +51,9 @@ class UWL:
 
     def heuristic_one_warehouse(self):
         
+        best_open_warehouses, best_assignated_warehouses, best_cost = self.initialize_bad_solution()
+        print(f"-------- Starting One_Warehouse heuristic --------")
+
         open_warehouses = np.zeros(self.m)
         assignated_warehouses = np.zeros(self.n) - 1
 
@@ -53,13 +64,22 @@ class UWL:
             
             new_cost = self.compute_cost(open_warehouses,assignated_warehouses)
 
-            if new_cost < self.best_cost:
+            if new_cost < best_cost:
                 print(f"Found a better solution with One_Warehouse heuristic. New cost: {new_cost}")
-                self.open_warehouses = open_warehouses
-                self.assignated_warehouses = assignated_warehouses
-                self.best_cost = new_cost
+                best_open_warehouses = open_warehouses
+                best_assignated_warehouses = assignated_warehouses
+                best_cost = new_cost
+
+        if best_cost < self.best_cost:
+            self.open_warehouses = best_open_warehouses
+            self.assignated_warehouses = best_assignated_warehouses
+            self.best_cost = best_cost
+
+        return best_open_warehouses, best_assignated_warehouses, best_cost
 
     def heuristic_nearest_warehouse(self):
+
+        print(f"-------- Starting Nearest_Warehouse heuristic --------")
 
         open_warehouses = np.zeros(self.m)
         assignated_warehouses = np.zeros(self.n)
@@ -76,6 +96,8 @@ class UWL:
             self.open_warehouses = open_warehouses
             self.assignated_warehouses = assignated_warehouses
             self.best_cost = new_cost
+        
+        return open_warehouses, assignated_warehouses, new_cost
 
     def hn_heuristic_set_cover(self, sets, costs):
         
@@ -117,16 +139,13 @@ class UWL:
         open_warehouses[selected_sets] = 1
 
         new_cost = self.compute_cost(open_warehouses, assignated_warehouses)
-
-        if new_cost < self.best_cost:
-            print(f"Found a better solution with the Cover heuristic. New cost: {new_cost}")
-            self.open_warehouses = open_warehouses
-            self.assignated_warehouses = assignated_warehouses
-            self.best_cost = new_cost
         
-        return new_cost
+        return open_warehouses, assignated_warehouses, new_cost
 
     def heuristic_cover(self, lim=10000):
+        best_open_warehouses, best_assignated_warehouses, best_cost = self.initialize_bad_solution()
+        print(f"-------- Starting the Cover heuristic --------")
+
         max_min_dist = np.max(np.min(self.distance_matrix, axis=1))
 
         flat_dist = self.distance_matrix.flatten()
@@ -135,7 +154,20 @@ class UWL:
         sorted_dist = sorted_dist[:lim]
 
         for dist in sorted_dist:
-            self.heuristic_cover_K(dist)
+            open_warehouses, assignated_warehouses, new_cost = self.heuristic_cover_K(dist)
+
+            if new_cost < best_cost:
+                print(f"Found a better solution with the Cover heuristic. New cost: {new_cost}")
+                best_open_warehouses = open_warehouses
+                best_assignated_warehouses = assignated_warehouses
+                best_cost = new_cost
+        
+        if best_cost < self.best_cost:
+            self.open_warehouses = best_open_warehouses
+            self.assignated_warehouses = best_assignated_warehouses
+            self.best_cost = best_cost
+
+        return best_open_warehouses, best_assignated_warehouses, best_cost
 
     def k_hamming_neighborhood(self, x, k=1):
         n = len(x)
@@ -148,13 +180,26 @@ class UWL:
         
         return neighbors
 
-    def descent(self, k_max=1):
+    def descent(self, k_max=1, open_warehouses=None, assignated_warehouses=None, best_cost=None):
+
+        print(f"-------- Starting the Descent from a solution of cost: {best_cost} --------")
+
+        best_open_warehouses = open_warehouses
+        best_assignated_warehouses = assignated_warehouses
+
+        if open_warehouses is None:
+            best_open_warehouses = self.open_warehouses
+        if assignated_warehouses is None:
+            best_assignated_warehouses = self.assignated_warehouses
+        if best_cost is None:
+            best_cost = self.best_cost
+
         k = 1
 
         while k <= k_max:
             improved = False
 
-            neighborhood = self.k_hamming_neighborhood(self.open_warehouses,k)
+            neighborhood = self.k_hamming_neighborhood(best_open_warehouses,k)
 
             for open_warehouses in neighborhood:
                 
@@ -165,17 +210,24 @@ class UWL:
                     
                     new_cost = self.compute_cost(open_warehouses,assignated_warehouses)
 
-                    if new_cost < self.best_cost:
+                    if new_cost < best_cost:
                         print(f"Found a better solution during the Descent - {k}-Hamming neighborhood. New cost: {new_cost}")
-                        self.open_warehouses = open_warehouses
-                        self.assignated_warehouses = assignated_warehouses
-                        self.best_cost = new_cost
+                        best_open_warehouses = open_warehouses
+                        best_assignated_warehouses = assignated_warehouses
+                        best_cost = new_cost
                         improved = True
                 except:
                     pass
             
             if not improved:
                 k += 1
+
+        if best_cost < self.best_cost:
+            self.open_warehouses = best_open_warehouses
+            self.assignated_warehouses = best_assignated_warehouses
+            self.best_cost = best_cost
+
+        return best_open_warehouses, best_assignated_warehouses, best_cost
         
     def print(self):
         print(f"""---------------------------

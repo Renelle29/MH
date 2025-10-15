@@ -10,10 +10,13 @@ def main():
         filename = sys.argv[1]
 
     uwl = UWL(filename)
-    uwl.heuristic_one_warehouse()
-    uwl.heuristic_nearest_warehouse()
-    uwl.heuristic_cover(1000)
-    uwl.descent(3) # Works fine up to kmax = 3
+
+    open_warehouses, assignated_warehouses, best_cost = uwl.heuristic_one_warehouse()
+    uwl.descent(3, open_warehouses, assignated_warehouses, best_cost)
+    open_warehouses, assignated_warehouses, best_cost = uwl.heuristic_nearest_warehouse()
+    uwl.descent(3, open_warehouses, assignated_warehouses, best_cost)
+    open_warehouses, assignated_warehouses, best_cost = uwl.heuristic_cover(1000)
+    uwl.descent(3, open_warehouses, assignated_warehouses, best_cost)
     uwl.print()
 
 def random_tests():
