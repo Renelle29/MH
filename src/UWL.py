@@ -1,4 +1,5 @@
 import numpy as np
+from itertools import combinations
 
 class UWL:
 
@@ -125,17 +126,54 @@ class UWL:
         
         return new_cost
 
-    def heuristic_cover(self):
+    def heuristic_cover(self, lim=10000):
         max_min_dist = np.max(np.min(self.distance_matrix, axis=1))
 
         flat_dist = self.distance_matrix.flatten()
         sorted_dist = flat_dist[flat_dist > max_min_dist]
         np.random.shuffle(sorted_dist) 
-        sorted_dist = sorted_dist[:10000]
+        sorted_dist = sorted_dist[:lim]
 
         for dist in sorted_dist:
             self.heuristic_cover_K(dist)
 
+    def k_hamming_neighborhood(self, x, k=1):
+        n = len(x)
+        neighbors = []
+
+        for idxs in combinations(range(n), k):
+            neighbor = x.copy()
+            neighbor[list(idxs)] = 1 - neighbor[list(idxs)]
+            neighbors.append(neighbor)
+        
+        return neighbors
+
+    def descent(self, k_max=1):
+        k = 1
+
+        while k <= k_max:
+            improved = False
+
+            neighborhood = self.k_hamming_neighborhood(self.open_warehouses,k)
+
+            for open_warehouses in neighborhood:
+
+                open_idx = np.where(open_warehouses == 1)[0]
+                local_min_idx = np.argmin(self.distance_matrix[:, open_idx], axis=1)
+                assignated_warehouses = open_idx[local_min_idx]
+                
+                new_cost = self.compute_cost(open_warehouses,assignated_warehouses)
+
+                if new_cost < self.best_cost:
+                    print(f"Found a better solution during the Descent - {k}-Hamming neighborhood. New cost: {new_cost}")
+                    self.open_warehouses = open_warehouses
+                    self.assignated_warehouses = assignated_warehouses
+                    self.best_cost = new_cost
+                    improved = True
+            
+            if not improved:
+                k += 1
+        
     def print(self):
         print(f"""---------------------------
 Uncapacitated warehouse location problem:

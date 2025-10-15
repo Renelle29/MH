@@ -1,12 +1,19 @@
 import numpy as np
+import sys
 
 from UWL import UWL
 
 def main():
-    uwl = UWL("./instances/capc.txt")
+    filename = "./instances/cap71.txt"
+
+    if len(sys.argv) > 1:
+        filename = sys.argv[1]
+
+    uwl = UWL(filename)
     uwl.heuristic_one_warehouse()
     uwl.heuristic_nearest_warehouse()
-    uwl.heuristic_cover()
+    uwl.heuristic_cover(1000)
+    uwl.descent(3) # Works fine up to kmax = 3
     uwl.print()
 
 def random_tests():
@@ -24,6 +31,9 @@ def random_tests():
 
     uwl.heuristic_cover()
     uwl.print()
+
+    neighborhood = uwl.k_hamming_neighborhood(np.zeros(5),5)
+    print(neighborhood)
 
 if __name__ == '__main__':
     main()
