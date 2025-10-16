@@ -1,15 +1,21 @@
 import numpy as np
 import sys
+import time
 
 from UWL import UWL
 
 def main():
+
     filename = "./instances/cap71.txt"
 
     if len(sys.argv) > 1:
         filename = sys.argv[1]
 
     uwl = UWL(filename)
+
+    #open_warehouses, assignated_warehouses, best_cost = uwl.heuristic_one_warehouse()
+    #uwl.random_descent(len(open_warehouses),open_warehouses, assignated_warehouses, best_cost,max_time=1*60)
+    #return
 
     open_warehouses, assignated_warehouses, best_cost = uwl.heuristic_one_warehouse()
     uwl.descent(3, open_warehouses, assignated_warehouses, best_cost)

@@ -1,4 +1,6 @@
 import numpy as np
+import random as rd
+import time
 from itertools import combinations
 
 class UWL:
@@ -182,8 +184,6 @@ class UWL:
 
     def descent(self, k_max=1, open_warehouses=None, assignated_warehouses=None, best_cost=None):
 
-        print(f"-------- Starting the Descent from a solution of cost: {best_cost} --------")
-
         best_open_warehouses = open_warehouses
         best_assignated_warehouses = assignated_warehouses
 
@@ -193,6 +193,8 @@ class UWL:
             best_assignated_warehouses = self.assignated_warehouses
         if best_cost is None:
             best_cost = self.best_cost
+        
+        print(f"-------- Starting the Descent from a solution of cost: {best_cost} --------")
 
         k = 1
 
@@ -228,7 +230,73 @@ class UWL:
             self.best_cost = best_cost
 
         return best_open_warehouses, best_assignated_warehouses, best_cost
+    
+    def k_hamming_random_neighborhood(self, x, k=1, neighborhood_size=200):
+        n = len(x)
+        neighbors = []
+
+        for i in range(neighborhood_size):
+            idxs = list(sorted(rd.sample(range(n), k)))
+            neighbor = x.copy()
+            neighbor[idxs] = 1 - neighbor[list(idxs)]
+            neighbors.append(neighbor)
         
+        return neighbors
+
+    def random_descent(self, k_max=1, open_warehouses=None, assignated_warehouses=None, best_cost=None, neighborhood_size=200, max_time=1):
+        
+        best_open_warehouses = open_warehouses
+        best_assignated_warehouses = assignated_warehouses
+
+        if open_warehouses is None:
+            best_open_warehouses = self.open_warehouses
+        if assignated_warehouses is None:
+            best_assignated_warehouses = self.assignated_warehouses
+        if best_cost is None:
+            best_cost = self.best_cost
+        
+        print(f"-------- Starting the Random Descent from a solution of cost: {best_cost} --------")
+
+        start = time.time()
+
+        while (time.time() - start) < max_time:
+            
+            k = 1
+
+            while k <= k_max:
+                improved = False
+
+                neighborhood = self.k_hamming_random_neighborhood(best_open_warehouses,k,neighborhood_size)
+
+                for open_warehouses in neighborhood:
+                
+                    open_idx = np.where(open_warehouses == 1)[0]
+                    if len(open_idx) == 0:
+                        continue
+                    local_min_idx = np.argmin(self.distance_matrix[:, open_idx], axis=1)
+                    assignated_warehouses = open_idx[local_min_idx]
+                        
+                    new_cost = self.compute_cost(open_warehouses,assignated_warehouses)
+
+                    if new_cost < best_cost:
+                        print(f"Found a better solution during the Random Descent - {k}-Hamming neighborhood. New cost: {new_cost}")
+                        best_open_warehouses = open_warehouses
+                        best_assignated_warehouses = assignated_warehouses
+                        best_cost = new_cost
+                        improved = True
+                        start = time.time()
+                    pass
+                
+                if not improved:
+                    k += 1
+
+        if best_cost < self.best_cost:
+            self.open_warehouses = best_open_warehouses
+            self.assignated_warehouses = best_assignated_warehouses
+            self.best_cost = best_cost
+
+        return best_open_warehouses, best_assignated_warehouses, best_cost
+
     def print(self):
         print(f"""---------------------------
 Uncapacitated warehouse location problem:
