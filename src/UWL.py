@@ -81,11 +81,12 @@ class UWL:
         return best_open_warehouses, best_assignated_warehouses, best_cost
 
     def heuristic_nearest_warehouse(self):
-
+        
         print(f"-------- Starting Nearest_Warehouse heuristic --------")
 
         open_warehouses = np.zeros(self.m)
         assignated_warehouses = np.zeros(self.n)
+        best_cost = np.sum(self.distance_matrix)
 
         for i in range(self.n):
             closest_warehouse = np.argmin(self.distance_matrix[i])
@@ -93,9 +94,11 @@ class UWL:
             open_warehouses[closest_warehouse] = 1
 
         new_cost = self.compute_cost(open_warehouses,assignated_warehouses)
+
+        if new_cost < best_cost:
+            print(f"Found a better solution with Nearest_Warehouse heuristic. New cost: {new_cost}")
         
         if new_cost < self.best_cost:
-            print(f"Found a better solution with Nearest_Warehouse heuristic. New cost: {new_cost}")
             self.open_warehouses = open_warehouses
             self.assignated_warehouses = assignated_warehouses
             self.best_cost = new_cost
