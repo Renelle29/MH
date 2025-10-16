@@ -4,6 +4,7 @@ import time
 from itertools import combinations
 
 class UWL:
+    """Uncapacitated Facility Location"""
 
     def __init__(self, filename):
         
@@ -100,6 +101,40 @@ class UWL:
             self.best_cost = new_cost
         
         return open_warehouses, assignated_warehouses, new_cost
+
+    def heuristic_glutton_opening(self):
+        best_open_warehouses, best_assignated_warehouses, best_cost = self.heuristic_one_warehouse()
+
+        for i in range(len(best_open_warehouses)):
+            
+            if best_open_warehouses[i] != 1:
+                best_open_warehouses[i] = 1
+
+                open_idx = np.where(best_open_warehouses == 1)[0]
+                if len(open_idx) == 0:
+                    continue
+                local_min_idx = np.argmin(self.distance_matrix[:, open_idx], axis=1)
+                assignated_warehouses = open_idx[local_min_idx]
+                    
+                new_cost = self.compute_cost(best_open_warehouses,assignated_warehouses)
+
+                if new_cost > best_cost:
+                    best_open_warehouses[i] = 0
+                else:
+                    print(f"Found a better solution with Glutton_Opening heuristic. New cost: {new_cost}")
+                    best_cost = new_cost
+
+        open_idx = np.where(best_open_warehouses == 1)[0]
+        local_min_idx = np.argmin(self.distance_matrix[:, open_idx], axis=1)
+        assignated_warehouses = open_idx[local_min_idx]
+        new_cost = self.compute_cost(best_open_warehouses,assignated_warehouses)
+
+        if new_cost < self.best_cost:
+            self.open_warehouses = best_open_warehouses
+            self.assignated_warehouses = assignated_warehouses
+            self.best_cost = new_cost
+
+        return best_open_warehouses, assignated_warehouses, new_cost
 
     def hn_heuristic_set_cover(self, sets, costs):
         

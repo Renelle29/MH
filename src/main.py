@@ -3,6 +3,7 @@ import sys
 import time
 
 from UWL import UWL
+from CWL import CWL
 
 def main():
 
@@ -13,16 +14,12 @@ def main():
 
     uwl = UWL(filename)
 
-    #open_warehouses, assignated_warehouses, best_cost = uwl.heuristic_one_warehouse()
-    #uwl.random_descent(len(open_warehouses),open_warehouses, assignated_warehouses, best_cost,max_time=1*60)
-    #return
-
-    open_warehouses, assignated_warehouses, best_cost = uwl.heuristic_one_warehouse()
-    uwl.descent(3, open_warehouses, assignated_warehouses, best_cost)
+    open_warehouses, assignated_warehouses, best_cost = uwl.heuristic_glutton_opening()
+    #uwl.descent(3, open_warehouses, assignated_warehouses, best_cost)
     open_warehouses, assignated_warehouses, best_cost = uwl.heuristic_nearest_warehouse()
-    uwl.descent(3, open_warehouses, assignated_warehouses, best_cost)
+    #uwl.descent(3, open_warehouses, assignated_warehouses, best_cost)
     open_warehouses, assignated_warehouses, best_cost = uwl.heuristic_cover(1000)
-    uwl.descent(3, open_warehouses, assignated_warehouses, best_cost)
+    #uwl.descent(3, open_warehouses, assignated_warehouses, best_cost)
     uwl.print()
 
 def random_tests():
