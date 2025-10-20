@@ -6,7 +6,7 @@ from itertools import combinations
 class UWL:
     """Uncapacitated Facility Location"""
 
-    def __init__(self, filename):
+    def __init__(self, filename, opt=None):
         
         with open(filename, 'r') as f:
             lines = [line.strip() for line in f if line.strip()]
@@ -37,6 +37,8 @@ class UWL:
         self.open_warehouses[0] = 1
         self.assignated_warehouses = np.zeros(n)
         self.best_cost = self.compute_best_cost()
+
+        self.opt = opt
 
     def initialize_bad_solution(self):
         open_warehouses = np.zeros(self.m)
@@ -257,8 +259,13 @@ class UWL:
                     best_assignated_warehouses = assignated_warehouses
                     best_cost = new_cost
                     improved = True
-                pass
+                    
+                    if self.opt is not None and round(best_cost,3) == round(self.opt,3):
+                        break
             
+            if self.opt is not None and round(best_cost,3) == round(self.opt,3):
+                break
+
             if not improved:
                 k += 1
 
@@ -281,7 +288,7 @@ class UWL:
         
         return neighbors
 
-    def random_descent(self, k_max=1, open_warehouses=None, assignated_warehouses=None, best_cost=None, neighborhood_size=200, max_time=1):
+    def random_descent(self, k_max=None, open_warehouses=None, assignated_warehouses=None, best_cost=None, neighborhood_size=200, max_time=1):
         
         best_open_warehouses = open_warehouses
         best_assignated_warehouses = assignated_warehouses
@@ -292,6 +299,8 @@ class UWL:
             best_assignated_warehouses = self.assignated_warehouses
         if best_cost is None:
             best_cost = self.best_cost
+        if k_max is None:
+            k_max = len(best_open_warehouses)
         
         print(f"-------- Starting the Random Descent from a solution of cost: {best_cost} --------")
 
@@ -321,12 +330,15 @@ class UWL:
                         best_open_warehouses = open_warehouses
                         best_assignated_warehouses = assignated_warehouses
                         best_cost = new_cost
-                        improved = True
                         start = time.time()
-                    pass
-                
-                if not improved:
-                    k += 1
+                        
+                if self.opt is not None and round(best_cost,3) == round(self.opt,3):
+                    break
+
+                k += 1
+            
+            if self.opt is not None and round(best_cost,3) == round(self.opt,3):
+                break
 
         if best_cost < self.best_cost:
             self.open_warehouses = best_open_warehouses
