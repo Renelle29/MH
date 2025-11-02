@@ -11,7 +11,7 @@ Pour exécuter le programme:
 
 Par exemple : `python ./src/main.py ./instances/cap71.txt [PPU] [RC]`
 
-Le programme affiche dans la console les différentes méthodes appelées, et à chaque fois, les améliorations de la solution courante.
+Le programme affiche dans la console les différentes méthodes appelées, et à chaque fois, les améliorations de la solution courante obtenues.
 
 A la fin de l'exécution du programme, il est affiché dans le terminal la meilleure solution obtenue pour l'instance, ainsi que le temps total d'exécution.
 
@@ -20,7 +20,9 @@ A la fin de l'exécution du programme, il est affiché dans le terminal la meill
 ### file_path
 
 Chemin d'accès local vers une instance du problème de localisation discrète.
+
 Le format est celui accessible à l'adresse suivante : https://people.brunel.ac.uk/~mastjjb/jeb/orlib/uncapinfo.html.
+
 Les capacités doivent être spécifiées (même si elles ne sont pas utilisées) par des valeurs entières.
 
 ### heuristics
