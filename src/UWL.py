@@ -1,3 +1,6 @@
+"""This module allow to find a solution to a Uncapacitated Warehouse Location problem
+by running various heuristics, neighborhood descents, and metaheuristics."""
+
 from typing import Optional
 import random as rd
 import time
