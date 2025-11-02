@@ -1,10 +1,15 @@
-import numpy as np
 import statistics as stats
 import sys
 import time
 
+import numpy as np
+
 from UWL import UWL
 from CWL import CWL
+
+if __name__ == '__main__':
+    main()
+    #evaluate_descents("instances/optima.txt")
 
 def main():
 
@@ -27,6 +32,73 @@ def main():
     open_warehouses, assignated_warehouses, best_cost = uwl.heuristic_cover(1000)
     #uwl.descent(3, open_warehouses, assignated_warehouses, best_cost)
     uwl.print()
+
+###############################################
+##### SOME UTILS FUNCTIONS FOR EVALUATION #####
+###############################################
+
+def get_heuristic_sols(uwl):
+    sols = []
+    sols.append(uwl.heuristic_glutton_opening())
+    sols.append(uwl.heuristic_nearest_warehouse())
+    sols.append(uwl.heuristic_cover(1000))
+    return sols
+
+def evaluate_heuristics(filename, base_path="instances/"):
+
+    with open(filename, 'r') as f:
+        lines = [line.strip() for line in f if line.strip()]
+
+    instances, opt_values = [], []
+    for line in lines:
+        vals = line.split()
+        instances.append(str(vals[0]))
+        opt_values.append(float(vals[1]))
+
+    output_tab = """| Instance |                 |      PPU      | PPU     | PPU   | CG             | CG      | CG    | CMI            | CMI     | CMI   |
+| -------- | :-------------: | :-----------: | :-----: | :---: | :------------: | :-----: | :---: | :------------: | :-----: | :---: |
+|          | Valeur Optimale |    Valeur     | Temps   | Gap   | Valeur         | Temps   | Gap   | Valeur         | Temps   | Gap   |"""
+
+    stats_data = {
+        'PPU': {'durations': [], 'errors': [], 'method': 'heuristic_nearest_warehouse'},
+        'CG':  {'durations': [], 'errors': [], 'method': 'heuristic_glutton_opening'},
+        'CMI': {'durations': [], 'errors': [], 'method': 'heuristic_cover', 'arg': 1000}
+    }
+
+    for inst, opt in zip(instances, opt_values):
+        filepath = f"{base_path}{inst}.txt"
+        new_line = f"| {inst} | {opt:.3f}"
+        uwl = UWL(filepath)
+
+        for key, data in stats_data.items():
+            method = getattr(uwl, data['method'])
+            start = time.time()
+            if 'arg' in data:
+                _, _, best_cost = method(data['arg'])
+            else:
+                _, _, best_cost = method()
+            duration = time.time() - start
+            error = ((best_cost - opt) / opt) * 100
+
+            new_line += f" | {best_cost:.3f} | {duration:.2f} | {error:.1f}"
+            data['durations'].append(duration)
+            data['errors'].append(error)
+
+        output_tab += "\n" + new_line
+
+    print(output_tab)
+
+    general_tab = """| Statistiques d'évaluation des heuristiques | PPU | CG  | CMI |
+| ----------------------------- | --- | --- | --- |"""
+
+    general_tab += f"\n| **Durée d'exécution moyenne (s)** | {stats.mean(stats_data['PPU']['durations']):.2f} | {stats.mean(stats_data['CG']['durations']):.2f} | {stats.mean(stats_data['CMI']['durations']):.2f} |"
+    general_tab += f"\n| **Erreur moyenne (%)** | {stats.mean(stats_data['PPU']['errors']):.2f} | {stats.mean(stats_data['CG']['errors']):.2f} | {stats.mean(stats_data['CMI']['errors']):.2f} |"
+    general_tab += f"\n| **Ecart-type sur l'erreur (%)** | {stats.stdev(stats_data['PPU']['errors']):.2f} | {stats.stdev(stats_data['CG']['errors']):.2f} | {stats.stdev(stats_data['CMI']['errors']):.2f} |"
+    general_tab += f"\n| **Erreur médiane (%)** | {stats.median(stats_data['PPU']['errors']):.2f} | {stats.median(stats_data['CG']['errors']):.2f} | {stats.median(stats_data['CMI']['errors']):.2f} |"
+    general_tab += f"\n| **Erreur minimum (%)** | {min(stats_data['PPU']['errors']):.2f} | {min(stats_data['CG']['errors']):.2f} | {min(stats_data['CMI']['errors']):.2f} |"
+    general_tab += f"\n| **Erreur maximum (%)** | {max(stats_data['PPU']['errors']):.2f} | {max(stats_data['CG']['errors']):.2f} | {max(stats_data['CMI']['errors']):.2f} |"
+
+    print(general_tab)
 
 def evaluate_descents(filename, base_path="instances/", min_instance=0, max_instance=1000):
 
@@ -95,68 +167,60 @@ def evaluate_descents(filename, base_path="instances/", min_instance=0, max_inst
 
     print(general_tab)
 
-def get_heuristic_sols(uwl):
-    sols = []
-    sols.append(uwl.heuristic_glutton_opening())
-    sols.append(uwl.heuristic_nearest_warehouse())
-    sols.append(uwl.heuristic_cover(1000))
-    return sols
-
-def evaluate_heuristics(filename, base_path="instances/"):
+def evaluate_simulated_annealing(filename, base_path="instances/", min_instance=0, max_instance=1000):
 
     with open(filename, 'r') as f:
         lines = [line.strip() for line in f if line.strip()]
 
     instances, opt_values = [], []
-    for line in lines:
+    for line in lines[:]:
         vals = line.split()
         instances.append(str(vals[0]))
         opt_values.append(float(vals[1]))
 
-    output_tab = """| Instance |                 |      PPU      | PPU     | PPU   | CG             | CG      | CG    | CMI            | CMI     | CMI   |
+    output_tab = """| Instance |                 |      SA      | SA     | SA   |
 | -------- | :-------------: | :-----------: | :-----: | :---: | :------------: | :-----: | :---: | :------------: | :-----: | :---: |
-|          | Valeur Optimale |    Valeur     | Temps   | Gap   | Valeur         | Temps   | Gap   | Valeur         | Temps   | Gap   |"""
+|          | Valeur Optimale |    Valeur     | Temps   | Gap   |"""
 
-    stats_data = {
-        'PPU': {'durations': [], 'errors': [], 'method': 'heuristic_nearest_warehouse'},
-        'CG':  {'durations': [], 'errors': [], 'method': 'heuristic_glutton_opening'},
-        'CMI': {'durations': [], 'errors': [], 'method': 'heuristic_cover', 'arg': 1000}
-    }
+    durations = []
+    errors = []
 
-    for inst, opt in zip(instances, opt_values):
+    for inst, opt in zip(instances[min_instance:max_instance], opt_values[min_instance:max_instance]):
         filepath = f"{base_path}{inst}.txt"
         new_line = f"| {inst} | {opt:.3f}"
-        uwl = UWL(filepath)
+        uwl = UWL(filepath, opt)
 
-        for key, data in stats_data.items():
-            method = getattr(uwl, data['method'])
+        heuristic_sols = get_heuristic_sols(uwl)
+        final_cost = 10**15
+
+        for open_warehouses, assignated_warehouses, best_cost in heuristic_sols:
+            
             start = time.time()
-            if 'arg' in data:
-                _, _, best_cost = method(data['arg'])
-            else:
-                _, _, best_cost = method()
-            duration = time.time() - start
-            error = ((best_cost - opt) / opt) * 100
 
-            new_line += f" | {best_cost:.3f} | {duration:.2f} | {error:.1f}"
-            data['durations'].append(duration)
-            data['errors'].append(error)
+            _, _, new_cost = uwl.simulated_annealing(open_warehouses,assignated_warehouses,best_cost,alpha=0.999,max_time=5)
+
+            if new_cost < final_cost:
+                duration = time.time() - start
+                final_cost = new_cost
+        
+        new_line += f" | {final_cost:.3f} | {duration:.2f} | {error:.1f}"
+        durations.append(duration)
+        errors.append(errors)
 
         output_tab += "\n" + new_line
 
     print(output_tab)
+    
+    general_tab = """| Statistiques d'évaluation de la métaheuristique | SA |
+| ----------------------------- | --- |"""
 
-    general_tab = """| Statistiques d'évaluation des heuristiques | PPU | CG  | CMI |
-| ----------------------------- | --- | --- | --- |"""
+    general_tab += f"\n| **Durée d'exécution moyenne (s)** | {stats.mean(durations):.2f} |"
+    general_tab += f"\n| **Erreur moyenne (%)** | {stats.mean(errors):.2f} |"
+    general_tab += f"\n| **Ecart-type sur l'erreur (%)** | {stats.stdev(errors):.2f} |"
+    general_tab += f"\n| **Erreur médiane (%)** | {stats.median(errors):.2f} |"
+    general_tab += f"\n| **Erreur minimum (%)** | {min(errors):.2f} |"
+    general_tab += f"\n| **Erreur maximum (%)** | {max(errors):.2f} |"
 
-    general_tab += f"\n| **Durée d'exécution moyenne (s)** | {stats.mean(stats_data['PPU']['durations']):.2f} | {stats.mean(stats_data['CG']['durations']):.2f} | {stats.mean(stats_data['CMI']['durations']):.2f} |"
-    general_tab += f"\n| **Erreur moyenne (%)** | {stats.mean(stats_data['PPU']['errors']):.2f} | {stats.mean(stats_data['CG']['errors']):.2f} | {stats.mean(stats_data['CMI']['errors']):.2f} |"
-    general_tab += f"\n| **Ecart-type sur l'erreur (%)** | {stats.stdev(stats_data['PPU']['errors']):.2f} | {stats.stdev(stats_data['CG']['errors']):.2f} | {stats.stdev(stats_data['CMI']['errors']):.2f} |"
-    general_tab += f"\n| **Erreur médiane (%)** | {stats.median(stats_data['PPU']['errors']):.2f} | {stats.median(stats_data['CG']['errors']):.2f} | {stats.median(stats_data['CMI']['errors']):.2f} |"
-    general_tab += f"\n| **Erreur minimum (%)** | {min(stats_data['PPU']['errors']):.2f} | {min(stats_data['CG']['errors']):.2f} | {min(stats_data['CMI']['errors']):.2f} |"
-    general_tab += f"\n| **Erreur maximum (%)** | {max(stats_data['PPU']['errors']):.2f} | {max(stats_data['CG']['errors']):.2f} | {max(stats_data['CMI']['errors']):.2f} |"
-
-    print(general_tab)
 
 def random_tests():
     sets = np.array([
@@ -176,7 +240,3 @@ def random_tests():
 
     neighborhood = uwl.k_hamming_neighborhood(np.zeros(5),5)
     print(neighborhood)
-
-if __name__ == '__main__':
-    main()
-    #evaluate_descents("instances/optima.txt")
