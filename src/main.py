@@ -8,14 +8,19 @@ from CWL import CWL
 
 def main():
 
-    filename = "./instances/cap71.txt"
+    filename = "./instances/cap131.txt"
+    opt = None
 
     if len(sys.argv) > 1:
         filename = sys.argv[1]
 
-    uwl = UWL(filename)
+    uwl = UWL(filename, opt)
 
     open_warehouses, assignated_warehouses, best_cost = uwl.heuristic_glutton_opening()
+    open_warehouses, assignated_warehouses, best_cost = uwl.heuristic_cover(1000)
+    #uwl.descent(1,open_warehouses,assignated_warehouses,best_cost)
+    uwl.simulated_annealing(open_warehouses, assignated_warehouses, best_cost, temp=None, alpha=0.999, max_time=30)
+    return
     #uwl.descent(3, open_warehouses, assignated_warehouses, best_cost)
     open_warehouses, assignated_warehouses, best_cost = uwl.heuristic_nearest_warehouse()
     #uwl.descent(3, open_warehouses, assignated_warehouses, best_cost)
@@ -24,13 +29,12 @@ def main():
     uwl.print()
 
 def evaluate_descents(filename, base_path="instances/", min_instance=0, max_instance=1000):
-    # TODO return time of fastest descent
 
     with open(filename, 'r') as f:
         lines = [line.strip() for line in f if line.strip()]
 
     instances, opt_values = [], []
-    for line in lines:
+    for line in lines[:]:
         vals = line.split()
         instances.append(str(vals[0]))
         opt_values.append(float(vals[1]))
@@ -42,7 +46,7 @@ def evaluate_descents(filename, base_path="instances/", min_instance=0, max_inst
     stats_data = {
         'C1-H': {'durations': [], 'errors': [], 'method': 'descent', 'k_max':1},
         'CP-H': {'durations': [], 'errors': [], 'method': 'descent', 'k_max':3},
-        'AP-H': {'durations': [], 'errors': [], 'method': 'random_descent', 'max_time':30}
+        'AP-H': {'durations': [], 'errors': [], 'method': 'random_descent', 'max_time':5}
     }
 
     for inst, opt in zip(instances[min_instance:max_instance], opt_values[min_instance:max_instance]):
@@ -54,20 +58,21 @@ def evaluate_descents(filename, base_path="instances/", min_instance=0, max_inst
 
         for key, data in stats_data.items():
             method = getattr(uwl, data['method'])
-            start = time.time()
             final_cost = 10**15
 
             for open_warehouses, assignated_warehouses, best_cost in heuristic_sols:
+                start = time.time()
+
                 if 'k_max' in data:
                     _, _, new_cost = method(data['k_max'], open_warehouses, assignated_warehouses, best_cost)
 
                 else:
                     _, _, new_cost = method(None, open_warehouses, assignated_warehouses, best_cost, max_time=data['max_time'])
+                
                 if new_cost < final_cost:
-                    print(new_cost)
+                    duration = time.time() - start
                     final_cost = new_cost
 
-            duration = time.time() - start
             error = ((final_cost - opt) / opt) * 100
 
             new_line += f" | {final_cost:.3f} | {duration:.2f} | {error:.1f}"
@@ -173,4 +178,5 @@ def random_tests():
     print(neighborhood)
 
 if __name__ == '__main__':
-    evaluate_descents("instances/optima.txt")
+    main()
+    #evaluate_descents("instances/optima.txt")

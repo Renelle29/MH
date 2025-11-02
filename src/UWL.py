@@ -347,6 +347,74 @@ class UWL:
 
         return best_open_warehouses, best_assignated_warehouses, best_cost
 
+    def simulated_annealing(self, open_warehouses=None, assignated_warehouses=None, best_cost=None, temp=None, alpha=0.95, max_time=1):
+        
+        print(f"-------- Starting the Simulated Annealing from a solution of cost: {best_cost} --------")
+
+        if temp is None:
+            temp = max(np.max(self.distance_matrix),np.max(self.build_costs))/1000
+            print(f"Starting a simulated annealing with initial temp of {temp}")
+
+        best_open_warehouses = open_warehouses
+        best_assignated_warehouses = assignated_warehouses
+
+        if open_warehouses is None:
+            best_open_warehouses = self.open_warehouses
+        if assignated_warehouses is None:
+            best_assignated_warehouses = self.assignated_warehouses
+        if best_cost is None:
+            best_cost = self.best_cost
+
+        current_open_warehouses = best_open_warehouses
+        current_assignated_warehouses = best_assignated_warehouses
+        current_cost = best_cost
+
+        start = time.time()
+
+        while (time.time() - start) < max_time:
+            
+            neighbor = self.k_hamming_random_neighborhood(current_open_warehouses,neighborhood_size=1)[0]
+            open_idx = np.where(neighbor == 1)[0]
+
+            try:
+                
+                local_min_idx = np.argmin(self.distance_matrix[:, open_idx], axis=1)
+                current_assignated_warehouses = open_idx[local_min_idx]
+                        
+                new_cost = self.compute_cost(neighbor,current_assignated_warehouses)
+
+                delta_cost = new_cost - current_cost
+                compare_value = np.exp((-1 * delta_cost) / temp)
+                if rd.random() < compare_value:
+                    #print(f"Switching current solution, comp value: {compare_value}")
+                    if new_cost < best_cost:
+                        print(f"Found a better solution during the Simulated Annealing. New cost: {new_cost}")
+                        best_open_warehouses = neighbor
+                        best_assignated_warehouses = current_assignated_warehouses
+                        best_cost = new_cost
+                        if self.opt is not None and round(best_cost,3) == round(self.opt,3):
+                            break
+                    current_open_warehouses = neighbor
+                    current_cost = new_cost
+                    start = time.time()
+
+            except:
+                if len(open_idx) == 0:
+                    print("Reached a solution where all warehouses were closed.")
+                else:
+                    print("Unknown error - to be investigated.")
+                pass
+
+            temp *= alpha
+
+        if best_cost < self.best_cost:
+            self.open_warehouses = best_open_warehouses
+            self.assignated_warehouses = best_assignated_warehouses
+            self.best_cost = best_cost
+
+        return best_open_warehouses, best_assignated_warehouses, best_cost
+
+
     def print(self):
         print(f"""---------------------------
 Uncapacitated warehouse location problem:
