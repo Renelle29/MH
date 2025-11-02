@@ -3,6 +3,8 @@ MPRO - Projet de métaheuristiques
 
 Ronan LE PRAT - 2025
 
+Les principales méthodes implémentées, et leur documentation, se trouvent dans le fichier [src/UWL.py](src/UWL.py).
+
 ## Exécution
 
 Pour exécuter le programme:
