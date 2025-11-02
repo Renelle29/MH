@@ -383,7 +383,7 @@ class UWL:
                         
                 new_cost = self.compute_cost(neighbor,current_assignated_warehouses)
 
-                delta_cost = new_cost - best_cost
+                delta_cost = new_cost - current_cost
                 compare_value = np.exp((-1 * delta_cost) / temp)
                 if rd.random() < compare_value:
                     #print(f"Switching current solution, comp value: {compare_value}")

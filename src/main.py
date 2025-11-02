@@ -8,7 +8,7 @@ from CWL import CWL
 
 def main():
 
-    filename = "./instances/capa.txt"
+    filename = "./instances/cap131.txt"
     opt = None
 
     if len(sys.argv) > 1:
