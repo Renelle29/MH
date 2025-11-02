@@ -1,7 +1,8 @@
-import numpy as np
 import random as rd
 import time
 from itertools import combinations
+
+import numpy as np
 
 class CWL:
     """Capacitated Facility Location"""

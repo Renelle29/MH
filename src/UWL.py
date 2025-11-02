@@ -23,6 +23,8 @@ class UWL:
             opt (float, optional): Optimal value of the instance. Defaults to None.
         """
 
+        self.file_path = file_path
+
         with open(file_path, 'r') as f:
             lines = [line.strip() for line in f if line.strip()]
 
@@ -578,6 +580,7 @@ class UWL:
 
         print(f"""---------------------------
 Uncapacitated warehouse location problem:
+Name: {self.file_path}
 Number of warehouses: {self.m}
 Number of clients: {self.n}
 Current best warehouse assignation: {self.assignated_warehouses}
